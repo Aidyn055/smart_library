@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Authors - SmartLibrary</title>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="/css/style.css" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<div class="container">
+    <aside class="sidebar">
+        <h2>SmartLibrary</h2>
+        <nav>
+            <a href="/">Dashboard</a>
+            <a href="/books">Books</a>
+            <a href="/authors" class="active">Authors</a>
+            <a href="/categories">Categories</a>
+            <a href="/readers">Readers</a>
+            <a href="/borrow-records">Borrow Records</a>
+        </nav>
+    </aside>
+
+    <main class="main">
+        <div class="topbar">
+            <h1>Authors</h1>
+            <form class="logout-form" th:action="@{/logout}" method="post">
+                <button type="submit">Logout</button>
+            </form>
+        </div>
+
+        <div class="section">
+            <h2>Add New Author</h2>
+            <div class="form-grid">
+                <input type="text" id="authorFullName" placeholder="Full name">
+                <input type="text" id="authorCountry" placeholder="Country">
+            </div>
+            <button class="btn btn-primary" onclick="addAuthor()">Add Author</button>
+        </div>
+
+        <div class="section">
+            <h2>Author List</h2>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Full Name</th>
+                        <th>Country</th>
+                        <th>Action</th>
+                    </tr>
+                    </thead>
+                    <tbody id="authorsTable"></tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+    function renderAuthors(data) {
+        const table = document.getElementById('authorsTable');
+        table.innerHTML = '';
+
+        if (data.length === 0) {
+            table.innerHTML = `<tr><td colspan="4" class="empty-state">No authors found</td></tr>`;
+            return;
+        }
+
+        data.forEach(author => {
+            let row = `
+                <tr>
+                    <td>${author.id}</td>
+                    <td>${author.fullName}</td>
+                    <td>${author.country}</td>
+                    <td>
+                        <button class="btn btn-danger" onclick="deleteAuthor(${author.id})">Delete</button>
+                    </td>
+                </tr>
+            `;
+            table.innerHTML += row;
+        });
+    }
+
+    function loadAuthors() {
+        fetch('/api/authors')
+            .then(response => response.json())
+            .then(data => renderAuthors(data));
+    }
+
+    function addAuthor() {
+        const author = {
+            fullName: document.getElementById('authorFullName').value,
+            country: document.getElementById('authorCountry').value
+        };
+
+        fetch('/api/authors', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(author)
+        })
+            .then(async response => {
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(errorText);
+                }
+                return response.json();
+            })
+            .then(data => {
+                alert('Author added successfully');
+                document.getElementById('authorFullName').value = '';
+                document.getElementById('authorCountry').value = '';
+                loadAuthors();
+            })
+            .catch(error => {
+                console.error(error);
+                alert('Error: ' + error.message);
+            });
+    }
+
+    function deleteAuthor(id) {
+        if (!confirm('Delete this author?')) return;
+
+        fetch('/api/authors/' + id, {
+            method: 'DELETE'
+        })
+            .then(async response => {
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(errorText);
+                }
+                alert('Author deleted successfully');
+                loadAuthors();
+            })
+            .catch(error => {
+                console.error(error);
+                alert('Error: ' + error.message);
+            });
+    }
+
+    loadAuthors();
+</script>
+
+</body>
+</html>

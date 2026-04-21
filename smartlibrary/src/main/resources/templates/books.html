@@ -1,0 +1,521 @@
+<!--<!DOCTYPE html>-->
+<!--<html xmlns:th="http://www.thymeleaf.org">-->
+<!--<head>-->
+<!--    <title>Books - SmartLibrary</title>-->
+<!--    <meta charset="UTF-8">-->
+<!--    <link rel="stylesheet" href="/css/style.css" th:href="@{/css/style.css}">-->
+<!--</head>-->
+<!--<body>-->
+
+<!--<div class="container">-->
+<!--    <aside class="sidebar">-->
+<!--        <h2>SmartLibrary</h2>-->
+<!--        <nav>-->
+<!--            <a href="/">Dashboard</a>-->
+<!--            <a href="/books" class="active">Books</a>-->
+<!--            <a href="/authors">Authors</a>-->
+<!--            <a href="/categories">Categories</a>-->
+<!--            <a href="/readers">Readers</a>-->
+<!--            <a href="/borrow-records">Borrow Records</a>-->
+<!--        </nav>-->
+<!--    </aside>-->
+
+<!--    <main class="main">-->
+<!--        <div class="topbar">-->
+<!--            <h1>Books</h1>-->
+<!--            <form class="logout-form" th:action="@{/logout}" method="post">-->
+<!--                <button type="submit">Logout</button>-->
+<!--            </form>-->
+<!--        </div>-->
+
+<!--        <div class="section">-->
+<!--            <h2>Add New Book</h2>-->
+<!--            <div class="form-grid">-->
+<!--                <input type="text" id="title" placeholder="Title">-->
+<!--                <input type="text" id="description" placeholder="Description">-->
+<!--                <input type="text" id="isbn" placeholder="ISBN">-->
+<!--                <input type="number" id="year" placeholder="Published Year">-->
+<!--                <input type="number" id="quantity" placeholder="Quantity">-->
+<!--                <input type="number" id="authorId" placeholder="Author ID">-->
+<!--                <input type="number" id="categoryId" placeholder="Category ID">-->
+<!--            </div>-->
+<!--            <button class="btn btn-primary" onclick="addBook()">Add Book</button>-->
+<!--        </div>-->
+
+<!--        <div class="section">-->
+<!--            <h2>Book List</h2>-->
+
+<!--            <div class="toolbar">-->
+<!--                <input type="text" id="search" placeholder="Search by title">-->
+<!--                <button class="btn btn-primary" onclick="searchBooks()">Search</button>-->
+<!--                <button class="btn btn-warning" onclick="loadBooks()">Reset</button>-->
+<!--            </div>-->
+
+<!--            <div class="table-wrapper">-->
+<!--                <table>-->
+<!--                    <thead>-->
+<!--                    <tr>-->
+<!--                        <th>ID</th>-->
+<!--                        <th>Title</th>-->
+<!--                        <th>Author</th>-->
+<!--                        <th>Category</th>-->
+<!--                        <th>Year</th>-->
+<!--                        <th>Quantity</th>-->
+<!--                        <th>Status</th>-->
+<!--                        <th>Action</th>-->
+<!--                    </tr>-->
+<!--                    </thead>-->
+<!--                    <tbody id="booksTable"></tbody>-->
+<!--                </table>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--    </main>-->
+<!--</div>-->
+
+<!--<script>-->
+<!--    function renderBooks(data) {-->
+<!--        let table = document.getElementById('booksTable');-->
+<!--        table.innerHTML = '';-->
+
+<!--        if (data.length === 0) {-->
+<!--            table.innerHTML = `<tr><td colspan="8" class="empty-state">No books found</td></tr>`;-->
+<!--            return;-->
+<!--        }-->
+
+<!--        data.forEach(book => {-->
+<!--            const statusClass = book.bookStatus === 'AVAILABLE'-->
+<!--                ? 'badge badge-available'-->
+<!--                : 'badge badge-borrowed';-->
+
+<!--            let actionButtons = `-->
+<!--                <button class="btn btn-danger" onclick="deleteBook(${book.id})">Delete</button>-->
+<!--            `;-->
+
+<!--            if (book.bookStatus === 'AVAILABLE') {-->
+<!--                actionButtons += `-->
+<!--                    <button class="btn btn-success" onclick="borrowBook(${book.id})">Borrow</button>-->
+<!--                `;-->
+<!--            }-->
+
+<!--            let row = `-->
+<!--                <tr>-->
+<!--                    <td>${book.id}</td>-->
+<!--                    <td>${book.title}</td>-->
+<!--                    <td>${book.authorFullName ?? ''}</td>-->
+<!--                    <td>${book.categoryName ?? ''}</td>-->
+<!--                    <td>${book.publishedYear}</td>-->
+<!--                    <td>${book.quantity}</td>-->
+<!--                    <td><span class="${statusClass}">${book.bookStatus}</span></td>-->
+<!--                    <td class="actions">-->
+<!--                        ${actionButtons}-->
+<!--                    </td>-->
+<!--                </tr>-->
+<!--            `;-->
+<!--            table.innerHTML += row;-->
+<!--        });-->
+<!--    }-->
+
+<!--    function loadBooks() {-->
+<!--        fetch('/api/books')-->
+<!--            .then(response => response.json())-->
+<!--            .then(data => renderBooks(data));-->
+<!--    }-->
+
+<!--    function searchBooks() {-->
+<!--        const title = document.getElementById('search').value;-->
+
+<!--        fetch('/api/books/search?title=' + encodeURIComponent(title))-->
+<!--            .then(response => response.json())-->
+<!--            .then(data => renderBooks(data));-->
+<!--    }-->
+
+<!--    function addBook() {-->
+<!--        let book = {-->
+<!--            title: document.getElementById('title').value,-->
+<!--            description: document.getElementById('description').value,-->
+<!--            isbn: document.getElementById('isbn').value,-->
+<!--            publishedYear: document.getElementById('year').value,-->
+<!--            quantity: document.getElementById('quantity').value,-->
+<!--            bookStatus: "AVAILABLE",-->
+<!--            authorId: document.getElementById('authorId').value,-->
+<!--            categoryId: document.getElementById('categoryId').value-->
+<!--        };-->
+
+<!--        fetch('/api/books', {-->
+<!--            method: 'POST',-->
+<!--            headers: {-->
+<!--                'Content-Type': 'application/json'-->
+<!--            },-->
+<!--            body: JSON.stringify(book)-->
+<!--        })-->
+<!--            .then(async response => {-->
+<!--                if (!response.ok) {-->
+<!--                    const errorText = await response.text();-->
+<!--                    throw new Error(errorText);-->
+<!--                }-->
+<!--                return response.json();-->
+<!--            })-->
+<!--            .then(data => {-->
+<!--                alert("Book added successfully");-->
+<!--                loadBooks();-->
+<!--            })-->
+<!--            .catch(error => {-->
+<!--                alert("Error: " + error.message);-->
+<!--                console.error(error);-->
+<!--            });-->
+<!--    }-->
+
+<!--    function deleteBook(id) {-->
+<!--        if (!confirm('Delete this book?')) return;-->
+
+<!--        fetch('/api/books/' + id, {-->
+<!--            method: 'DELETE'-->
+<!--        })-->
+<!--            .then(async response => {-->
+<!--                if (!response.ok) {-->
+<!--                    const errorText = await response.text();-->
+<!--                    throw new Error(errorText);-->
+<!--                }-->
+<!--                alert('Book deleted successfully');-->
+<!--                loadBooks();-->
+<!--            })-->
+<!--            .catch(error => {-->
+<!--                console.error(error);-->
+<!--                alert('Error: ' + error.message);-->
+<!--            });-->
+<!--    }-->
+
+<!--    function borrowBook(bookId) {-->
+<!--        const readerId = prompt("Enter Reader ID:");-->
+
+<!--        if (!readerId) return;-->
+
+<!--        fetch(`/api/borrow-records/borrow?bookId=${bookId}&readerId=${readerId}`, {-->
+<!--            method: 'POST'-->
+<!--        })-->
+<!--            .then(async response => {-->
+<!--                if (!response.ok) {-->
+<!--                    const errorText = await response.text();-->
+<!--                    throw new Error(errorText);-->
+<!--                }-->
+<!--                return response.json();-->
+<!--            })-->
+<!--            .then(data => {-->
+<!--                alert('Book borrowed successfully');-->
+<!--                loadBooks();-->
+<!--            })-->
+<!--            .catch(error => {-->
+<!--                console.error(error);-->
+<!--                alert('Error: ' + error.message);-->
+<!--            });-->
+<!--    }-->
+
+<!--    loadBooks();-->
+<!--</script>-->
+
+<!--</body>-->
+<!--</html>-->
+
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Books - SmartLibrary</title>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="/css/style.css" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<div class="container">
+    <aside class="sidebar">
+        <h2>SmartLibrary</h2>
+        <nav>
+            <a href="/">Dashboard</a>
+            <a href="/books" class="active">Books</a>
+            <a href="/authors">Authors</a>
+            <a href="/categories">Categories</a>
+            <a href="/readers">Readers</a>
+            <a href="/borrow-records">Borrow Records</a>
+        </nav>
+    </aside>
+
+    <main class="main">
+        <div class="topbar">
+            <h1>Books</h1>
+            <form class="logout-form" th:action="@{/logout}" method="post">
+                <button type="submit">Logout</button>
+            </form>
+        </div>
+
+        <div class="section">
+            <h2 id="formTitle">Add New Book</h2>
+
+            <input type="hidden" id="bookId">
+
+            <div class="form-grid">
+                <input type="text" id="title" placeholder="Title">
+                <input type="text" id="description" placeholder="Description">
+                <input type="text" id="isbn" placeholder="ISBN">
+                <input type="number" id="year" placeholder="Published Year">
+                <input type="number" id="quantity" placeholder="Quantity">
+                <input type="number" id="authorId" placeholder="Author ID">
+                <input type="number" id="categoryId" placeholder="Category ID">
+            </div>
+
+            <div class="actions">
+                <button class="btn btn-primary" id="saveButton" onclick="saveBook()">Add Book</button>
+                <button class="btn btn-warning" onclick="clearForm()">Clear</button>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Book List</h2>
+
+            <div class="toolbar">
+                <input type="text" id="search" placeholder="Search by title">
+                <button class="btn btn-primary" onclick="searchBooks()">Search</button>
+                <button class="btn btn-warning" onclick="loadBooks()">Reset</button>
+            </div>
+
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Title</th>
+                        <th>Author</th>
+                        <th>Category</th>
+                        <th>Year</th>
+                        <th>Quantity</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                    </thead>
+                    <tbody id="booksTable"></tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+    function renderBooks(data) {
+        let table = document.getElementById('booksTable');
+        table.innerHTML = '';
+
+        if (data.length === 0) {
+            table.innerHTML = `<tr><td colspan="8" class="empty-state">No books found</td></tr>`;
+            return;
+        }
+
+        data.forEach(book => {
+            const statusClass = book.bookStatus === 'AVAILABLE'
+                ? 'badge badge-available'
+                : 'badge badge-borrowed';
+
+            let actionButtons = `
+                <button class="btn btn-warning" onclick='editBook(${JSON.stringify(book)})'>Edit</button>
+                <button class="btn btn-danger" onclick="deleteBook(${book.id})">Delete</button>
+            `;
+
+            if (book.bookStatus === 'AVAILABLE') {
+                actionButtons += `
+                    <button class="btn btn-success" onclick="borrowBook(${book.id})">Borrow</button>
+                `;
+            }
+
+            let row = `
+                <tr>
+                    <td>${book.id}</td>
+                    <td>${book.title}</td>
+                    <td>${book.authorFullName ?? ''}</td>
+                    <td>${book.categoryName ?? ''}</td>
+                    <td>${book.publishedYear}</td>
+                    <td>${book.quantity}</td>
+                    <td><span class="${statusClass}">${book.bookStatus}</span></td>
+                    <td class="actions">${actionButtons}</td>
+                </tr>
+            `;
+            table.innerHTML += row;
+        });
+    }
+
+    function loadBooks() {
+        fetch('/api/books')
+            .then(response => response.json())
+            .then(data => renderBooks(data));
+    }
+
+    function searchBooks() {
+        const title = document.getElementById('search').value;
+
+        fetch('/api/books/search?title=' + encodeURIComponent(title))
+            .then(response => response.json())
+            .then(data => renderBooks(data));
+    }
+
+    function saveBook() {
+        const bookId = document.getElementById('bookId').value;
+
+        let currentStatus = "AVAILABLE";
+
+        if (bookId) {
+            const savedStatus = document.getElementById('bookId').dataset.status;
+            if (savedStatus) {
+                currentStatus = savedStatus;
+            }
+        }
+
+        let book = {
+            title: document.getElementById('title').value,
+            description: document.getElementById('description').value,
+            isbn: document.getElementById('isbn').value,
+            publishedYear: document.getElementById('year').value,
+            quantity: document.getElementById('quantity').value,
+            bookStatus: currentStatus,
+            authorId: document.getElementById('authorId').value,
+            categoryId: document.getElementById('categoryId').value
+        };
+
+        if (bookId) {
+            updateBook(bookId, book);
+        } else {
+            addBook(book);
+        }
+    }
+
+    function addBook(book) {
+        fetch('/api/books', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(book)
+        })
+            .then(async response => {
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(errorText);
+                }
+                return response.json();
+            })
+            .then(data => {
+                alert("Book added successfully");
+                clearForm();
+                loadBooks();
+            })
+            .catch(error => {
+                alert("Error: " + error.message);
+                console.error(error);
+            });
+    }
+
+    function updateBook(id, book) {
+        fetch('/api/books/' + id, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(book)
+        })
+            .then(async response => {
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(errorText);
+                }
+                return response.json();
+            })
+            .then(data => {
+                alert("Book updated successfully");
+                clearForm();
+                loadBooks();
+            })
+            .catch(error => {
+                alert("Error: " + error.message);
+                console.error(error);
+            });
+    }
+
+    function editBook(book) {
+        document.getElementById('bookId').value = book.id;
+        document.getElementById('bookId').dataset.status = book.bookStatus;
+
+        document.getElementById('title').value = book.title ?? '';
+        document.getElementById('description').value = book.description ?? '';
+        document.getElementById('isbn').value = book.isbn ?? '';
+        document.getElementById('year').value = book.publishedYear ?? '';
+        document.getElementById('quantity').value = book.quantity ?? '';
+        document.getElementById('authorId').value = book.authorId ?? '';
+        document.getElementById('categoryId').value = book.categoryId ?? '';
+
+        document.getElementById('formTitle').innerText = 'Edit Book';
+        document.getElementById('saveButton').innerText = 'Update Book';
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function clearForm() {
+        document.getElementById('bookId').value = '';
+        document.getElementById('bookId').dataset.status = '';
+
+        document.getElementById('title').value = '';
+        document.getElementById('description').value = '';
+        document.getElementById('isbn').value = '';
+        document.getElementById('year').value = '';
+        document.getElementById('quantity').value = '';
+        document.getElementById('authorId').value = '';
+        document.getElementById('categoryId').value = '';
+
+        document.getElementById('formTitle').innerText = 'Add New Book';
+        document.getElementById('saveButton').innerText = 'Add Book';
+    }
+
+    function deleteBook(id) {
+        if (!confirm('Delete this book?')) return;
+
+        fetch('/api/books/' + id, {
+            method: 'DELETE'
+        })
+            .then(async response => {
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(errorText);
+                }
+                alert('Book deleted successfully');
+                loadBooks();
+            })
+            .catch(error => {
+                console.error(error);
+                alert('Error: ' + error.message);
+            });
+    }
+
+    function borrowBook(bookId) {
+        const readerId = prompt("Enter Reader ID:");
+
+        if (!readerId) return;
+
+        fetch(`/api/borrow-records/borrow?bookId=${bookId}&readerId=${readerId}`, {
+            method: 'POST'
+        })
+            .then(async response => {
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(errorText);
+                }
+                return response.json();
+            })
+            .then(data => {
+                alert('Book borrowed successfully');
+                loadBooks();
+            })
+            .catch(error => {
+                console.error(error);
+                alert('Error: ' + error.message);
+            });
+    }
+
+    loadBooks();
+</script>
+
+</body>
+</html>

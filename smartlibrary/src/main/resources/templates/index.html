@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>SmartLibrary Dashboard</title>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="/css/style.css" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<div class="container">
+    <aside class="sidebar">
+        <h2>SmartLibrary</h2>
+        <nav>
+            <a href="/" class="active">Dashboard</a>
+            <a href="/books">Books</a>
+            <a href="/authors">Authors</a>
+            <a href="/categories">Categories</a>
+            <a href="/readers">Readers</a>
+            <a href="/borrow-records">Borrow Records</a>
+        </nav>
+    </aside>
+
+    <main class="main">
+        <div class="topbar">
+            <h1>Dashboard</h1>
+            <form class="logout-form" th:action="@{/logout}" method="post">
+                <button type="submit">Logout</button>
+            </form>
+        </div>
+
+        <div class="cards">
+            <div class="card">
+                <h3>Total Books</h3>
+                <p id="totalBooks">0</p>
+            </div>
+            <div class="card">
+                <h3>Total Authors</h3>
+                <p id="totalAuthors">0</p>
+            </div>
+            <div class="card">
+                <h3>Total Readers</h3>
+                <p id="totalReaders">0</p>
+            </div>
+            <div class="card">
+                <h3>Borrowed Books</h3>
+                <p id="borrowedBooks">0</p>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Welcome</h2>
+            <p>SmartLibrary is a library management system where you can manage books, authors, categories, readers, and borrow records.</p>
+        </div>
+    </main>
+</div>
+
+<script>
+    async function loadDashboardStats() {
+        const books = await fetch('/api/books').then(r => r.json());
+        const authors = await fetch('/api/authors').then(r => r.json());
+        const readers = await fetch('/api/readers').then(r => r.json());
+        const records = await fetch('/api/borrow-records').then(r => r.json());
+
+        document.getElementById('totalBooks').innerText = books.length;
+        document.getElementById('totalAuthors').innerText = authors.length;
+        document.getElementById('totalReaders').innerText = readers.length;
+        document.getElementById('borrowedBooks').innerText =
+            records.filter(r => r.borrowStatus === 'BORROWED').length;
+    }
+
+    loadDashboardStats();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Readers - SmartLibrary</title>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="/css/style.css" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<div class="container">
+    <aside class="sidebar">
+        <h2>SmartLibrary</h2>
+        <nav>
+            <a href="/">Dashboard</a>
+            <a href="/books">Books</a>
+            <a href="/authors">Authors</a>
+            <a href="/categories">Categories</a>
+            <a href="/readers" class="active">Readers</a>
+            <a href="/borrow-records">Borrow Records</a>
+        </nav>
+    </aside>
+
+    <main class="main">
+        <div class="topbar">
+            <h1>Readers</h1>
+            <form class="logout-form" th:action="@{/logout}" method="post">
+                <button type="submit">Logout</button>
+            </form>
+        </div>
+
+        <div class="section">
+            <h2>Add New Reader</h2>
+            <div class="form-grid">
+                <input type="text" id="readerFullName" placeholder="Full name">
+                <input type="email" id="readerEmail" placeholder="Email">
+                <input type="text" id="readerPhone" placeholder="Phone">
+            </div>
+            <button class="btn btn-primary" onclick="addReader()">Add Reader</button>
+        </div>
+
+        <div class="section">
+            <h2>Reader List</h2>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Full Name</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Action</th>
+                    </tr>
+                    </thead>
+                    <tbody id="readersTable"></tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+    function renderReaders(data) {
+        const table = document.getElementById('readersTable');
+        table.innerHTML = '';
+
+        if (data.length === 0) {
+            table.innerHTML = `<tr><td colspan="5" class="empty-state">No readers found</td></tr>`;
+            return;
+        }
+
+        data.forEach(reader => {
+            let row = `
+                <tr>
+                    <td>${reader.id}</td>
+                    <td>${reader.fullName}</td>
+                    <td>${reader.email}</td>
+                    <td>${reader.phone ?? ''}</td>
+                    <td>
+                        <button class="btn btn-danger" onclick="deleteReader(${reader.id})">Delete</button>
+                    </td>
+                </tr>
+            `;
+            table.innerHTML += row;
+        });
+    }
+
+    function loadReaders() {
+        fetch('/api/readers')
+            .then(response => response.json())
+            .then(data => renderReaders(data));
+    }
+
+    function addReader() {
+        const reader = {
+            fullName: document.getElementById('readerFullName').value,
+            email: document.getElementById('readerEmail').value,
+            phone: document.getElementById('readerPhone').value
+        };
+
+        fetch('/api/readers', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(reader)
+        })
+            .then(async response => {
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(errorText);
+                }
+                return response.json();
+            })
+            .then(data => {
+                alert('Reader added successfully');
+                document.getElementById('readerFullName').value = '';
+                document.getElementById('readerEmail').value = '';
+                document.getElementById('readerPhone').value = '';
+                loadReaders();
+            })
+            .catch(error => {
+                console.error(error);
+                alert('Error: ' + error.message);
+            });
+    }
+
+    function deleteReader(id) {
+        if (!confirm('Delete this reader?')) return;
+
+        fetch('/api/readers/' + id, {
+            method: 'DELETE'
+        })
+            .then(async response => {
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(errorText);
+                }
+                alert('Reader deleted successfully');
+                loadReaders();
+            })
+            .catch(error => {
+                console.error(error);
+                alert('Error: ' + error.message);
+            });
+    }
+
+    loadReaders();
+</script>
+
+</body>
+</html>

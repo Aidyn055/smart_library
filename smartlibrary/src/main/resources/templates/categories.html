@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Categories - SmartLibrary</title>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="/css/style.css" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<div class="container">
+    <aside class="sidebar">
+        <h2>SmartLibrary</h2>
+        <nav>
+            <a href="/">Dashboard</a>
+            <a href="/books">Books</a>
+            <a href="/authors">Authors</a>
+            <a href="/categories" class="active">Categories</a>
+            <a href="/readers">Readers</a>
+            <a href="/borrow-records">Borrow Records</a>
+        </nav>
+    </aside>
+
+    <main class="main">
+        <div class="topbar">
+            <h1>Categories</h1>
+            <form class="logout-form" th:action="@{/logout}" method="post">
+                <button type="submit">Logout</button>
+            </form>
+        </div>
+
+        <div class="section">
+            <h2>Add New Category</h2>
+            <div class="form-grid">
+                <input type="text" id="categoryName" placeholder="Category name">
+            </div>
+            <button class="btn btn-primary" onclick="addCategory()">Add Category</button>
+        </div>
+
+        <div class="section">
+            <h2>Category List</h2>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Action</th>
+                    </tr>
+                    </thead>
+                    <tbody id="categoriesTable"></tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+    function renderCategories(data) {
+        const table = document.getElementById('categoriesTable');
+        table.innerHTML = '';
+
+        if (data.length === 0) {
+            table.innerHTML = `<tr><td colspan="3" class="empty-state">No categories found</td></tr>`;
+            return;
+        }
+
+        data.forEach(category => {
+            let row = `
+                <tr>
+                    <td>${category.id}</td>
+                    <td>${category.name}</td>
+                    <td>
+                        <button class="btn btn-danger" onclick="deleteCategory(${category.id})">Delete</button>
+                    </td>
+                </tr>
+            `;
+            table.innerHTML += row;
+        });
+    }
+
+    function loadCategories() {
+        fetch('/api/categories')
+            .then(response => response.json())
+            .then(data => renderCategories(data));
+    }
+
+    function addCategory() {
+        const category = {
+            name: document.getElementById('categoryName').value
+        };
+
+        fetch('/api/categories', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(category)
+        })
+            .then(async response => {
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(errorText);
+                }
+                return response.json();
+            })
+            .then(data => {
+                alert('Category added successfully');
+                document.getElementById('categoryName').value = '';
+                loadCategories();
+            })
+            .catch(error => {
+                console.error(error);
+                alert('Error: ' + error.message);
+            });
+    }
+
+    function deleteCategory(id) {
+        if (!confirm('Delete this category?')) return;
+
+        fetch('/api/categories/' + id, {
+            method: 'DELETE'
+        })
+            .then(async response => {
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(errorText);
+                }
+                alert('Category deleted successfully');
+                loadCategories();
+            })
+            .catch(error => {
+                console.error(error);
+                alert('Error: ' + error.message);
+            });
+    }
+
+    loadCategories();
+</script>
+
+</body>
+</html>

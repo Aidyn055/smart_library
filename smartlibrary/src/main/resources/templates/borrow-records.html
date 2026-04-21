@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Borrow Records - SmartLibrary</title>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="/css/style.css" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<div class="container">
+    <aside class="sidebar">
+        <h2>SmartLibrary</h2>
+        <nav>
+            <a href="/">Dashboard</a>
+            <a href="/books">Books</a>
+            <a href="/authors">Authors</a>
+            <a href="/categories">Categories</a>
+            <a href="/readers">Readers</a>
+            <a href="/borrow-records" class="active">Borrow Records</a>
+        </nav>
+    </aside>
+
+    <main class="main">
+        <div class="topbar">
+            <h1>Borrow Records</h1>
+            <form class="logout-form" th:action="@{/logout}" method="post">
+                <button type="submit">Logout</button>
+            </form>
+        </div>
+
+        <div class="section">
+            <h2>Borrow Book</h2>
+            <div class="form-grid">
+                <input type="number" id="borrowBookId" placeholder="Book ID">
+                <input type="number" id="borrowReaderId" placeholder="Reader ID">
+            </div>
+            <button class="btn btn-success" onclick="borrowBook()">Borrow Book</button>
+        </div>
+
+        <div class="section">
+            <h2>Borrow Record List</h2>
+
+            <div class="toolbar">
+                <button class="btn btn-primary" onclick="loadBorrowRecords()">All</button>
+                <button class="btn btn-warning" onclick="loadBorrowRecordsByStatus('BORROWED')">Borrowed</button>
+                <button class="btn btn-success" onclick="loadBorrowRecordsByStatus('RETURNED')">Returned</button>
+            </div>
+
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Book</th>
+                        <th>Reader</th>
+                        <th>Borrow Date</th>
+                        <th>Return Date</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                    </thead>
+                    <tbody id="borrowRecordsTable"></tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+    function renderBorrowRecords(data) {
+        const table = document.getElementById('borrowRecordsTable');
+        table.innerHTML = '';
+
+        if (data.length === 0) {
+            table.innerHTML = `<tr><td colspan="7" class="empty-state">No borrow records found</td></tr>`;
+            return;
+        }
+
+        data.forEach(record => {
+            let statusClass = record.borrowStatus === 'BORROWED'
+                ? 'badge badge-borrowed'
+                : 'badge badge-returned';
+
+            let actionButton = record.borrowStatus === 'BORROWED'
+                ? `<button class="btn btn-danger" onclick="returnBook(${record.id})">Return</button>`
+                : '';
+
+            let row = `
+                <tr>
+                    <td>${record.id}</td>
+                    <td>${record.bookTitle ?? ''}</td>
+                    <td>${record.readerFullName ?? ''}</td>
+                    <td>${record.borrowDate ?? ''}</td>
+                    <td>${record.returnDate ?? ''}</td>
+                    <td><span class="${statusClass}">${record.borrowStatus}</span></td>
+                    <td>${actionButton}</td>
+                </tr>
+            `;
+            table.innerHTML += row;
+        });
+    }
+
+    function loadBorrowRecords() {
+        fetch('/api/borrow-records')
+            .then(response => response.json())
+            .then(data => renderBorrowRecords(data));
+    }
+
+    function loadBorrowRecordsByStatus(status) {
+        fetch('/api/borrow-records/status?borrowStatus=' + status)
+            .then(response => response.json())
+            .then(data => renderBorrowRecords(data));
+    }
+
+    function borrowBook() {
+        const bookId = document.getElementById('borrowBookId').value;
+        const readerId = document.getElementById('borrowReaderId').value;
+
+        fetch(`/api/borrow-records/borrow?bookId=${bookId}&readerId=${readerId}`, {
+            method: 'POST'
+        })
+            .then(async response => {
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(errorText);
+                }
+                return response.json();
+            })
+            .then(data => {
+                alert('Book borrowed successfully');
+                document.getElementById('borrowBookId').value = '';
+                document.getElementById('borrowReaderId').value = '';
+                loadBorrowRecords();
+            })
+            .catch(error => {
+                console.error(error);
+                alert('Error: ' + error.message);
+            });
+    }
+
+    function returnBook(recordId) {
+        fetch(`/api/borrow-records/return/${recordId}`, {
+            method: 'POST'
+        })
+            .then(async response => {
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(errorText);
+                }
+                return response.json();
+            })
+            .then(data => {
+                alert('Book returned successfully');
+                loadBorrowRecords();
+            })
+            .catch(error => {
+                console.error(error);
+                alert('Error: ' + error.message);
+            });
+    }
+
+    loadBorrowRecords();
+</script>
+
+</body>
+</html>
