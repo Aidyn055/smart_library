@@ -42,7 +42,7 @@ public class ReaderService {
 
             existingReader.setFullName(updatedReader.getFullName());
             existingReader.setEmail(updatedReader.getEmail());
-            existingReader.setPhone(updatedReader.getPhone());
+
 
             return readerRepository.save(existingReader);
         } catch (Exception e) {

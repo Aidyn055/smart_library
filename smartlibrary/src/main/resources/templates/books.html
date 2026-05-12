@@ -217,7 +217,8 @@
 <!--</html>-->
 
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <title>Books - SmartLibrary</title>
     <meta charset="UTF-8">
@@ -246,7 +247,7 @@
             </form>
         </div>
 
-        <div class="section">
+        <div class="section" sec:authorize="hasRole('ADMIN')">
             <h2 id="formTitle">Add New Book</h2>
 
             <input type="hidden" id="bookId">
@@ -297,6 +298,10 @@
     </main>
 </div>
 
+<script th:inline="javascript">
+    let isAdmin = [[${#authorization.expression('hasRole(''ADMIN'')')}]];
+</script>
+
 <script>
     function renderBooks(data) {
         let table = document.getElementById('booksTable');
@@ -312,15 +317,21 @@
                 ? 'badge badge-available'
                 : 'badge badge-borrowed';
 
-            let actionButtons = `
-                <button class="btn btn-warning" onclick='editBook(${JSON.stringify(book)})'>Edit</button>
-                <button class="btn btn-danger" onclick="deleteBook(${book.id})">Delete</button>
-            `;
+            let actionButtons = '';
 
-            if (book.bookStatus === 'AVAILABLE') {
+            if (isAdmin) {
                 actionButtons += `
-                    <button class="btn btn-success" onclick="borrowBook(${book.id})">Borrow</button>
+                    <button class="btn btn-warning" onclick='editBook(${JSON.stringify(book)})'>Edit</button>
+                    <button class="btn btn-danger" onclick="deleteBook(${book.id})">Delete</button>
                 `;
+
+                if (book.bookStatus === 'AVAILABLE') {
+                    actionButtons += `
+                        <button class="btn btn-success" onclick="borrowBook(${book.id})">Borrow</button>
+                    `;
+                }
+            } else {
+                actionButtons = `<span style="color:#6b7280;">View only</span>`;
             }
 
             let row = `

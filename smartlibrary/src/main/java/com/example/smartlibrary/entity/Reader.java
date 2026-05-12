@@ -20,8 +20,10 @@ public class Reader {
     @Column(name = "full_name", nullable = false)
     private String fullName;
 
-    @Column(nullable = false, unique = true)
     private String email;
 
-    private String phone;
+    private String password;
+
+    @Enumerated(EnumType.STRING)
+    private Role role;
 }
